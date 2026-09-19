@@ -73,8 +73,11 @@ def ensure_worktree() -> None:
     """Check out the gh-pages branch at dist/ so publishing is an ordinary commit and push."""
     if (DIST / ".git").exists():
         return
-    if DIST.exists():
-        shutil.rmtree(DIST)
+    # Empty rather than delete dist/: Google Drive can hold a lock on the folder itself,
+    # and git accepts an existing empty directory for a worktree.
+    DIST.mkdir(exist_ok=True)
+    for entry in DIST.iterdir():
+        shutil.rmtree(entry) if entry.is_dir() else entry.unlink()
     if git("rev-parse", "--verify", "--quiet", "gh-pages", check=False).returncode == 0:
         git("worktree", "add", str(DIST), "gh-pages")
     elif git("ls-remote", "--exit-code", "--heads", "origin", "gh-pages", check=False).returncode == 0:
