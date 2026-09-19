@@ -1,0 +1,18 @@
+batch:
+  default_count: 3
+  max_problems_per_batch: 20
+  max_concurrent_problems: 3
+
+retries:
+  malformed_output: 1
+  code_fix: 1
+
+sandbox:
+  timeout_s: 30
+  memory_mb: 512
+
+answers:
+  default_float_tolerance: 1.0e-6
+
+api:
+  request_timeout_s: 900

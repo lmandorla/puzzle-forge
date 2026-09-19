@@ -1,0 +1,70 @@
+# Shared difficulty scale, given to the proposer alongside the category-specific rubric.
+global_difficulty:
+  easy: One standard technique or formula, small numbers, a few lines of work by hand.
+  medium: Combines two techniques, needs casework, or a clever reframing of the problem.
+  hard: Needs a non-obvious insight (bijection, recursion, invariant, symmetry); brute force by hand is impractical.
+
+categories:
+  - id: combinatorics
+    name: Combinatorics
+    description: Counting arrangements, selections, and structures.
+    difficulty:
+      easy: A single counting principle (permutations, combinations, pigeonhole) on small numbers.
+      medium: Casework, complementary counting, or basic inclusion-exclusion.
+      hard: A non-obvious bijection, generating function, or recursive structure.
+
+  - id: probability
+    name: Probability
+    description: Chance, expected values, and random processes.
+    difficulty:
+      easy: Probability of a simple event in a small, enumerable sample space.
+      medium: Conditional probability, linearity of expectation, or a moderate state space.
+      hard: A Markov chain or recursion, a clever symmetry, or a continuous/geometric probability twist.
+
+  - id: geometry
+    name: Geometry
+    description: Shapes, lengths, areas, angles, and spatial reasoning.
+    difficulty:
+      easy: One theorem or formula (Pythagoras, area, similar triangles) on a simple figure.
+      medium: Combines two geometric facts or needs an auxiliary construction.
+      hard: A clever synthetic insight, or optimization over a continuous configuration.
+
+  - id: number_theory
+    name: Number Theory
+    description: Integers, divisibility, primes, digits, and modular arithmetic.
+    difficulty:
+      easy: Direct divisibility, parity, or digit reasoning on small numbers.
+      medium: Modular arithmetic combined with counting, or a simple Diophantine equation.
+      hard: The Chinese remainder theorem, a non-obvious identity, or a deep structural argument.
+
+  - id: game_theory
+    name: Game Theory
+    description: Two-player games, optimal strategy, and winning positions.
+    difficulty:
+      easy: A small game solvable by direct enumeration or an obvious mirroring strategy.
+      medium: Identifying a pattern of winning/losing positions (parity, invariant).
+      hard: Sprague-Grundy values, sums of games, or an optimal mixed strategy.
+
+  - id: graph_theory
+    name: Graph Theory
+    description: Networks, paths, colorings, and connections.
+    difficulty:
+      easy: A direct property of a small explicit graph (degrees, simple paths).
+      medium: A structural argument (trees, bipartiteness, Euler paths) on a moderate graph.
+      hard: An extremal argument, matching theorem, or a large implicitly defined graph.
+
+  - id: algebra_optimization
+    name: Algebra & Optimization
+    description: Equations, sequences, and finding the best possible value.
+    difficulty:
+      easy: Solve a direct equation or evaluate a simple sequence term.
+      medium: An algebraic trick (AM-GM, substitution, telescoping) to reach an extremum.
+      hard: A multi-step optimization or a non-obvious bounding argument.
+
+  - id: logic_recreational
+    name: Logic & Recreational
+    description: Weighings, truth-tellers and liars, clever deductions - always with a numeric answer.
+    difficulty:
+      easy: A short deduction chain with few cases.
+      medium: A careful case analysis or an information-counting argument.
+      hard: An optimal-strategy question (minimum number of weighings/questions) with a tight lower bound.

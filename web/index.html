@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Puzzle Forge</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231c2a44'/%3E%3Cpath d='M9 23V9h9a4 4 0 010 8H9' fill='none' stroke='%23f6e35c' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="#/puzzles">Puzzle Forge</a>
+    <nav aria-label="Sections">
+      <a href="#/puzzles" data-nav="puzzle">Puzzles</a>
+      <a href="#/generate" data-nav="generate">Generate</a>
+      <a href="#/graveyard" data-nav="graveyard">Graveyard</a>
+    </nav>
+    <span class="spend" id="spend" title="Total API spend recorded by this project"></span>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <dialog id="confirm" aria-labelledby="confirm-title">
+    <form method="dialog">
+      <h2 id="confirm-title">Submit this answer?</h2>
+      <p id="confirm-body"></p>
+      <div class="dialog-actions">
+        <button value="cancel" class="button quiet">Keep thinking</button>
+        <button value="ok" class="button primary" id="confirm-ok">Submit answer</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,13 @@
+anthropic==1.7.0
+python-dotenv
+pydantic>=2
+pyyaml
+fastapi
+uvicorn[standard]
+psutil
+numpy
+sympy
+pytest
+pytest-asyncio
+httpx
+playwright

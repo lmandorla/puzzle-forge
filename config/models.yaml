@@ -1,0 +1,28 @@
+# Model and effort per pipeline stage.
+# Opus 5 / Fable 5.1 / Sonnet 5 reject temperature, so proposer diversity comes
+# from inspiration seeds in the prompt, not sampling parameters.
+# Haiku alternative for the cheap stages: claude-haiku-4-5 (does not accept `effort`; set it to null).
+stages:
+  proposer:             {model: claude-opus-5,    effort: high,   max_tokens: 16000}
+  reasoning_verifier:   {model: claude-fable-5-1, effort: high,   max_tokens: 32000}
+  code_verifier:        {model: claude-fable-5-1, effort: medium,   max_tokens: 32000}
+  adversarial_verifier: {model: claude-fable-5-1, effort: medium,   max_tokens: 16000}
+  rewriter:             {model: claude-sonnet-5,  effort: medium, max_tokens: 8000}
+  illustrator:          {model: claude-sonnet-5,  effort: medium, max_tokens: 16000}
+  hints:                {model: claude-sonnet-5,  effort: medium, max_tokens: 8000}
+
+# Server-side refusal fallback: if a model declines, the API re-runs the request
+# on a fallback model within the same call.
+refusal_fallback:
+  enabled: true
+  beta: server-side-fallback-2026-07-01
+  mode: default
+  models: [claude-fable-5-1, claude-opus-5]
+
+# USD per million tokens (input, output), used for cost logging only.
+pricing:
+  claude-fable-5-1: [10.0, 50.0]
+  claude-opus-5:    [5.0, 25.0]
+  claude-sonnet-5:  [2.0, 10.0]
+  claude-haiku-4-5: [1.0, 5.0]
+  claude-opus-4-8:  [5.0, 25.0]   # possible refusal-fallback model
