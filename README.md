@@ -31,6 +31,7 @@ In the commands below, `python` means the project virtualenv's interpreter (`%US
 | Web app (generate, solve, graveyard) | `python -m forge.api` then open http://127.0.0.1:8765 |
 | Generate from the command line | `python generate.py --count 3 [--category geometry] [--difficulty hard] [--concurrency 3]` |
 | Run one agent on its own | `python -m forge.agents.proposer --category probability --difficulty easy` (also `reasoning_verifier`, `code_verifier`, `adversarial`, `rewriter`, `illustrator`, `hints`) |
+| Publish the read-only site to GitHub Pages | `python tools/export_static.py --publish [--cname your.domain.com]` |
 | Tests (no API calls) | `python -m pytest` |
 | Browser check (server must be running) | `python tools/ui_check.py basic` (free); `python tools/ui_check.py generate` (runs a real 2-puzzle batch) |
 
