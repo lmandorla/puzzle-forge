@@ -15,6 +15,7 @@ from forge.config import DATA_DIR  # noqa: E402
 from forge.storage import ProblemStore  # noqa: E402
 
 BASE = "http://127.0.0.1:8765"
+STATIC = False
 SHOTS = DATA_DIR / "previews"
 SHOTS.mkdir(parents=True, exist_ok=True)
 
@@ -121,11 +122,17 @@ def basic(browser):
     page.goto(f"{BASE}/#/graveyard")
     page.screenshot(path=SHOTS / "ui_graveyard.png", full_page=True)
 
-    page.goto(f"{BASE}/#/generate")
-    expect(page.get_by_role("button", name="Generate 3 puzzles")).to_be_visible()
-    page.fill("#count", "2")
-    check(page.get_by_role("button", name="Generate 2 puzzles").is_visible(), "generate button label follows the count")
-    page.screenshot(path=SHOTS / "ui_generate.png", full_page=True)
+    if STATIC:
+        check(page.locator('[data-nav="generate"]').count() == 0, "published site has no Generate tab")
+        page.goto(f"{BASE}/#/generate")
+        expect(page.locator("h1")).to_have_text("Puzzles")
+        check(True, "the Generate URL redirects to the puzzle list")
+    else:
+        page.goto(f"{BASE}/#/generate")
+        expect(page.get_by_role("button", name="Generate 3 puzzles")).to_be_visible()
+        page.fill("#count", "2")
+        check(page.get_by_role("button", name="Generate 2 puzzles").is_visible(), "generate button label follows the count")
+        page.screenshot(path=SHOTS / "ui_generate.png", full_page=True)
 
     page.goto(f"{BASE}/#/puzzle/does-not-exist")
     expect(page.locator(".notice")).to_be_visible()
@@ -167,6 +174,8 @@ def generate(browser):
 
 if __name__ == "__main__":
     phase = sys.argv[1] if len(sys.argv) > 1 else "basic"
+    if len(sys.argv) > 2:  # e.g. `basic http://127.0.0.1:8766` to check the static export
+        BASE, STATIC = sys.argv[2].rstrip("/"), True
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="msedge")
         {"basic": basic, "generate": generate}[phase](browser)

@@ -1,6 +1,8 @@
 "use strict";
 
 const view = document.getElementById("view");
+// Set by tools/export_static.py: the published site has no server, only a data file.
+const STATIC_DATA = document.querySelector('meta[name="pf-static-data"]')?.content ?? null;
 let CONFIG = null;
 let routeToken = 0;
 let pollTimer = null;
@@ -70,7 +72,72 @@ function rich(tag, cls, text) {
   return h(tag, { class: cls, html: renderRich(text) });
 }
 
+// ---------- static mode (published snapshot, no server) ----------
+
+let staticData = null;
+
+async function loadStatic() {
+  if (!staticData) {
+    const response = await fetch(STATIC_DATA, { cache: "no-cache" });
+    if (!response.ok) throw new Error("Couldn't load the puzzle data.");
+    staticData = await response.json();
+  }
+  return staticData;
+}
+
+// Mirrors forge/answers.py so the published site grades answers exactly like the server.
+function parseNumber(text) {
+  const t = String(text).trim().replace(/\.$/, "").replace(/,/g, "");
+  let value;
+  const frac = t.match(/^([+-]?\d+)\/(\d+)$/);
+  if (frac) value = Number(frac[2]) === 0 ? NaN : Number(frac[1]) / Number(frac[2]);
+  else if (/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(t)) value = Number(t);
+  else value = NaN;
+  return Number.isFinite(value) ? value : null;
+}
+
+function answersAgree(a, b, tolerance) {
+  return Math.abs(a - b) <= tolerance + 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
+}
+
+function unseal(sealed) {
+  const bytes = Uint8Array.from(atob(sealed), (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+async function staticApi(path, options) {
+  const data = await loadStatic();
+  const [route, query] = path.split("?");
+  const params = new URLSearchParams(query || "");
+  const all = [...data.valid, ...data.graveyard];
+  const find = (id) => {
+    const item = all.find((p) => p.summary.id === id);
+    if (!item) throw new Error("Unknown puzzle");
+    return item;
+  };
+  if (route === "/config") return data.config;
+  if (route === "/problems") {
+    return all.map((p) => p.summary)
+      .filter((r) => ["status", "category", "difficulty", "reason"].every((k) => !params.get(k) || r[k] === params.get(k)))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }
+  let m = route.match(/^\/problems\/([\w-]+)$/);
+  if (m) { const item = find(m[1]); return item.public ?? item.record; }
+  m = route.match(/^\/problems\/([\w-]+)\/answer$/);
+  if (m) {
+    const item = find(m[1]);
+    if (!item.sealed) throw new Error("This puzzle is in the graveyard and has no answer key.");
+    const { value } = JSON.parse(options.body);
+    const n = parseNumber(value);
+    if (n == null) throw new Error("Please enter a number, like 42, 3/4 or 0.125.");
+    const reveal = unseal(item.sealed);
+    return { ...reveal, correct: answersAgree(n, reveal.answer.value, reveal.answer.tolerance), submitted: value.trim() };
+  }
+  throw new Error("That isn't available on the published site.");
+}
+
 async function api(path, options = {}) {
+  if (STATIC_DATA) return staticApi(path, options);
   const response = await fetch(`/api${path}`, {
     ...options,
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -124,6 +191,7 @@ function select(label, value, options, onChange) {
 }
 
 async function refreshSpend() {
+  if (STATIC_DATA) return;
   try {
     const stats = await api("/stats");
     document.getElementById("spend").textContent = `API spend so far: $${stats.total_spend_usd.toFixed(2)}`;
@@ -166,7 +234,7 @@ async function showPuzzles(token) {
         h("p", {}, f.category || f.difficulty
           ? "No puzzles match these filters yet."
           : "No puzzles yet. Generate a batch and the ones that pass every check will appear here."),
-        h("a", { class: "button primary", href: "#/generate" }, "Generate puzzles"));
+        STATIC_DATA ? null : h("a", { class: "button primary", href: "#/generate" }, "Generate puzzles"));
 
   mount(token, h("section", { class: "sheet" },
     h("h1", {}, "Puzzles"),
@@ -481,6 +549,7 @@ const ROUTES = [
 async function route() {
   clearTimeout(pollTimer);
   const hash = location.hash || "#/puzzles";
+  if (STATIC_DATA && hash === "#/generate") { location.hash = "#/puzzles"; return; }
   const match = ROUTES.map(([re, fn, nav]) => [hash.match(re), fn, nav]).find(([m]) => m);
   if (!match) { location.hash = "#/puzzles"; return; }
   const [m, fn, nav] = match;
@@ -498,10 +567,13 @@ async function route() {
 }
 
 async function init() {
+  if (STATIC_DATA) document.querySelector('[data-nav="generate"]').remove();
   try {
     CONFIG = await api("/config");
   } catch (err) {
-    view.replaceChildren(h("p", { class: "notice" }, `The server isn't responding: ${err.message}. Start it with python -m forge.api.`));
+    view.replaceChildren(h("p", { class: "notice" }, STATIC_DATA
+      ? `The puzzles couldn't be loaded: ${err.message}`
+      : `The server isn't responding: ${err.message}. Start it with python -m forge.api.`));
     return;
   }
   window.addEventListener("hashchange", route);

@@ -45,6 +45,31 @@ def public_view(p: Problem) -> dict:
     }
 
 
+def answer_reveal(p: Problem) -> dict:
+    """Everything shown after a solver submits: the answer key, Fable's solution and the checking program."""
+    a, r = p.answer, p.reasoning_verifier
+    last_run = p.code_verifier.attempts[-1] if p.code_verifier.attempts else None
+    return {
+        "answer": {"display": display_answer(a.value, a.format, a.decimal_places), "value": a.value,
+                   "expression": a.expression, "format": a.format, "tolerance": a.tolerance},
+        "fable": {"solution": r.reasoning, "answer": r.answer, "expression": r.answer_expression, "model": r.call.model},
+        "code": {"approach": last_run.approach, "script": last_run.script,
+                 "stdout": last_run.execution.stdout, "answer": p.code_verifier.answer} if last_run else None,
+    }
+
+
+def config_payload() -> dict:
+    cats = config.categories()["categories"]
+    batch = config.pipeline()["batch"]
+    return {
+        "categories": [{"id": c["id"], "name": c["name"], "description": c["description"]} for c in cats],
+        "difficulties": ["easy", "medium", "hard"],
+        "reasons": list(get_args(RejectionReason)),
+        "batch": {"default_count": batch["default_count"], "max_count": batch["max_problems_per_batch"],
+                  "default_concurrency": batch["max_concurrent_problems"]},
+    }
+
+
 def create_app(store: ProblemStore | None = None) -> FastAPI:
     store = store or ProblemStore()
     store.reindex()
@@ -54,15 +79,7 @@ def create_app(store: ProblemStore | None = None) -> FastAPI:
 
     @app.get("/api/config")
     def get_config():
-        cats = config.categories()["categories"]
-        batch = config.pipeline()["batch"]
-        return {
-            "categories": [{"id": c["id"], "name": c["name"], "description": c["description"]} for c in cats],
-            "difficulties": ["easy", "medium", "hard"],
-            "reasons": list(get_args(RejectionReason)),
-            "batch": {"default_count": batch["default_count"], "max_count": batch["max_problems_per_batch"],
-                      "default_concurrency": batch["max_concurrent_problems"]},
-        }
+        return config_payload()
 
     @app.post("/api/generate")
     async def generate(req: GenerateRequest):
@@ -141,17 +158,10 @@ def create_app(store: ProblemStore | None = None) -> FastAPI:
         value = parse_number(req.value)
         if value is None:
             raise HTTPException(400, "Please enter a number, like 42, 3/4 or 0.125.")
-        a, r = p.answer, p.reasoning_verifier
-        last_run = p.code_verifier.attempts[-1] if p.code_verifier.attempts else None
         return {
-            "correct": answers_agree(value, a.value, a.tolerance),
+            "correct": answers_agree(value, p.answer.value, p.answer.tolerance),
             "submitted": req.value.strip(),
-            "answer": {"display": display_answer(a.value, a.format, a.decimal_places), "value": a.value,
-                       "expression": a.expression, "format": a.format, "tolerance": a.tolerance},
-            "fable": {"solution": r.reasoning, "answer": r.answer, "expression": r.answer_expression,
-                      "model": r.call.model},
-            "code": {"approach": last_run.approach, "script": last_run.script,
-                     "stdout": last_run.execution.stdout, "answer": p.code_verifier.answer} if last_run else None,
+            **answer_reveal(p),
         }
 
     @app.get("/api/stats")
